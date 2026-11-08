@@ -22,7 +22,7 @@ except ImportError:
 
 import gradio as gr
 from PIL import Image
-from src.aggregate.pipeline import analyze as analyze_pipeline
+from src.aggregate.pipeline import AI_ABOVE, REAL_BELOW, analyze as analyze_pipeline
 
 # Formats accepted by the upload widget
 ACCEPTED_FORMATS = [
@@ -228,31 +228,42 @@ button.analyze-btn:hover, .analyze-btn button:hover {
 .verdict.is-uncertain { border-style: dashed; }
 .verdict.is-empty .v-word { color: var(--ink-3); }
 
+/* Scale: three zones (REAL / UNSURE / AI), the zone the image lands in is
+   filled, and a pointer shows exactly where on the scale it landed */
 .meter { margin-top: 28px; }
-.meter-track {
-    position: relative;
-    height: 12px;
-    border: 1.5px solid currentColor;
-}
-.meter-fill {
-    position: absolute; left: 0; top: 0; bottom: 0;
-    background: currentColor;
-}
-.meter-tick {
-    position: absolute; top: -6px; bottom: -6px; left: 50%;
-    border-left: 1.5px dashed currentColor;
-    opacity: 0.6;
-}
-.meter-scale {
-    display: flex;
-    justify-content: space-between;
+.meter-read {
     font-family: var(--mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-top: 10px;
+    margin-bottom: 14px;
 }
-.meter-scale b { font-weight: 700; }
+.meter-read b { font-size: 1.15rem; letter-spacing: 0; }
+.meter-scale { position: relative; padding-top: 14px; }
+.meter-pointer {
+    position: absolute; top: 0;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid currentColor;
+}
+.meter-zones { display: flex; height: 14px; }
+.meter-zones > div { border: 1.5px solid currentColor; }
+.meter-zones > div + div { border-left: none; }
+.meter-zones > div.on { background: currentColor; }
+.meter-labels {
+    display: flex;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+.meter-labels > div { opacity: 0.45; }
+.meter-labels > div:nth-child(2) { text-align: center; }
+.meter-labels > div:nth-child(3) { text-align: right; }
+.meter-labels > div.on { opacity: 1; font-weight: 700; }
 
 /* ---------- Text outputs ---------- */
 textarea, input[type="text"] {
@@ -314,18 +325,34 @@ textarea:focus, input[type="text"]:focus { border-color: var(--ink) !important; 
 
 
 def verdict_html(word, sub, score=None, kind="empty"):
-    """The verdict panel: one big word, a line of detail, and a Real-to-AI meter."""
+    """The verdict panel: one big word, a line of detail, and a scale with
+    REAL / UNSURE / AI zones (same cut-offs as the verdict) and a pointer."""
     if score is None:
         meter = ""
     else:
-        pct = max(0.0, min(1.0, score)) * 100
+        score = max(0.0, min(1.0, score))
+        # The readout speaks from the verdict's side: "73% likely real"
+        if score < 0.5:
+            read = f"<b>{(1 - score) * 100:.0f}%</b> likely real"
+        else:
+            read = f"<b>{score * 100:.0f}%</b> likely AI"
+        if kind == "uncertain":
+            read += " · too close to call"
+        zones = [("Real", REAL_BELOW, score <= REAL_BELOW),
+                 ("Unsure", AI_ABOVE - REAL_BELOW, REAL_BELOW < score < AI_ABOVE),
+                 ("AI", 1 - AI_ABOVE, score >= AI_ABOVE)]
+        bars = "".join(f'<div class="{"on" if on else ""}" style="width:{w * 100:.0f}%"></div>'
+                       for _, w, on in zones)
+        labels = "".join(f'<div class="{"on" if on else ""}" style="width:{w * 100:.0f}%">{name}</div>'
+                         for name, w, on in zones)
         meter = f"""
         <div class="meter">
-            <div class="meter-track">
-                <div class="meter-fill" style="width:{pct:.1f}%"></div>
-                <div class="meter-tick"></div>
+            <div class="meter-read">{read}</div>
+            <div class="meter-scale">
+                <div class="meter-pointer" style="left:{score * 100:.1f}%"></div>
+                <div class="meter-zones">{bars}</div>
             </div>
-            <div class="meter-scale"><span>Real</span><b>{pct:.0f}% baked</b><span>AI</span></div>
+            <div class="meter-labels">{labels}</div>
         </div>"""
     return f"""
     <div class="verdict is-{kind}">
