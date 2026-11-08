@@ -236,6 +236,7 @@ data/
 src/data/*/*
 !src/data/*/.gitkeep
 
-# Trained models: large files, share them outside git (e.g. Google Drive)
+# Trained models: ignored (large), except detector.pt - the model the app uses
 src/models/*
 !src/models/.gitkeep
+!src/models/detector.pt

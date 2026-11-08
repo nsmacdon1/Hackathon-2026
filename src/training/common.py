@@ -6,11 +6,13 @@ and build the model in exactly the same way. If they ever differed, the model
 would be tested on images that look different from what it learned on.
 """
 
+import io
 import os
+import random
 from pathlib import Path
 
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 from torch import nn
 from torch.utils.data import Dataset
 from torchvision import models, transforms
@@ -40,19 +42,52 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
+class RandomDegrade:
+    """Randomly make an image look "worn": re-saved as JPEG, shrunk, blurred.
+
+    Why: in GenImage the real photos are old, compressed JPEGs and the AI
+    images are pristine. A model trained on that learns "worn = real", so an
+    AI image that was re-saved or shrunk (very common online) fools it.
+    Applying the same damage at random to BOTH real and fake training images
+    makes "worn-looking" useless as a clue, so the model has to learn what
+    actually gives AI images away.
+    """
+
+    def __init__(self, p_jpeg=0.5, p_shrink=0.3, p_blur=0.3):
+        self.p_jpeg, self.p_shrink, self.p_blur = p_jpeg, p_shrink, p_blur
+
+    def __call__(self, img):
+        if random.random() < self.p_shrink:
+            # shrink to 40-100% size, then back: fine detail is lost
+            w, h = img.size
+            f = random.uniform(0.4, 1.0)
+            img = img.resize((max(1, int(w * f)), max(1, int(h * f))),
+                             Image.Resampling.BICUBIC).resize((w, h), Image.Resampling.BICUBIC)
+        if random.random() < self.p_blur:
+            img = img.filter(ImageFilter.GaussianBlur(random.uniform(0.1, 1.5)))
+        if random.random() < self.p_jpeg:
+            buf = io.BytesIO()
+            img.save(buf, "JPEG", quality=random.randint(30, 95))
+            buf.seek(0)
+            img = Image.open(buf).convert("RGB")
+        return img
+
+
 def get_transforms(img_size, train):
     """How an image is turned into numbers the model can read.
 
     Training uses a RANDOM crop and a random mirror flip, so the model sees
     slightly different versions of each image every epoch. This is called
-    "data augmentation" and stops it from memorising exact images.
+    "data augmentation" and stops it from memorising exact images. Training
+    also randomly degrades images (see RandomDegrade above).
     Evaluation uses a fixed centre crop, so results are repeatable.
     """
     # Resize makes any image work (e.g. ones you test by hand later). For
     # images from prepare_data.py it changes nothing: they're already 256.
     steps = [transforms.Resize(PREP_SIZE)]
     if train:
-        steps += [transforms.RandomCrop(img_size),
+        steps += [RandomDegrade(),
+                  transforms.RandomCrop(img_size),
                   transforms.RandomHorizontalFlip()]
     else:
         steps += [transforms.CenterCrop(img_size)]
