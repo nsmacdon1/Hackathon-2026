@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Training images: keep the folders (via .gitkeep), ignore everything inside
+src/data/*/*
+!src/data/*/.gitkeep
