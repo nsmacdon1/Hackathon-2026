@@ -8,8 +8,15 @@ How they're combined:
   - Evidence of AI in the metadata is strong (C2PA "AI-generated", a prompt
     stored in the PNG, an AI tool named as the software). Nobody fakes being
     AI, so it overrides the model and the image is called AI.
-  - Camera EXIF only nudges the score towards real: it's easy to fake.
+  - Camera EXIF pulls the score towards real, more strongly the more complete
+    it is. Full camera data (make, model and exposure settings) means the
+    pixel model alone can never call the image AI - at most "uncertain".
+    It isn't absolute because EXIF can be faked.
   - Otherwise the model's score decides.
+
+Why camera EXIF counts this much: the pixel model learned real photos from
+ImageNet (older, smaller photos), so modern high-resolution phone photos look
+unfamiliar to it and it often over-scores them as AI.
 """
 
 from src.detector.provenance import analyze as analyze_provenance
@@ -17,8 +24,26 @@ from src.detector.provenance import analyze as analyze_provenance
 # Score thresholds for the verdict (score = how likely the image is AI)
 AI_ABOVE = 0.70
 REAL_BELOW = 0.30
-# Camera EXIF moves the model's score this far towards "real"
-CAMERA_EXIF_NUDGE = 0.8
+
+# How much camera metadata counts, blended with the pixel score:
+#   score = (1 - weight) * pixel_score + weight * CAMERA_PRIOR
+CAMERA_PRIOR = 0.05              # what camera metadata alone "says" (very likely real)
+CAMERA_WEIGHT_FULL = 0.60        # make + model + at least 2 exposure settings
+CAMERA_WEIGHT_PARTIAL = 0.35     # make or model only
+EXPOSURE_FIELDS = ("ExposureTime", "FNumber", "ISOSpeedRatings", "FocalLength")
+
+
+def camera_evidence(exif):
+    """How complete the camera metadata is: (weight, description)."""
+    fields = exif.get("camera_fields", {})
+    has_device = "Make" in fields or "Model" in fields
+    exposure = [f for f in EXPOSURE_FIELDS if f in fields]
+    device = " ".join(fields[f] for f in ("Make", "Model") if f in fields).strip()
+    if has_device and "Make" in fields and "Model" in fields and len(exposure) >= 2:
+        return CAMERA_WEIGHT_FULL, f"full camera data ({device}, {len(exposure)} exposure settings)"
+    if has_device:
+        return CAMERA_WEIGHT_PARTIAL, f"partial camera data ({device})"
+    return 0.0, ""
 
 
 def analyze(image_path):
@@ -38,15 +63,19 @@ def analyze(image_path):
         signals.append(f"Pixel classifier unavailable: {e}")
 
     # --- Combine -----------------------------------------------------------
+    weight, camera_desc = camera_evidence(prov["exif"])
     if prov["verdict"] == "ai":
         score = max(p or 0.0, 0.97)
         reason = "metadata proves AI"
     elif p is None:
-        score = 0.15 if prov["verdict"] == "likely_real" else 0.5
+        score = CAMERA_PRIOR if weight else 0.5
         reason = "metadata only"
-    elif prov["verdict"] == "likely_real":
-        score = p * CAMERA_EXIF_NUDGE
-        reason = "pixel classifier, nudged towards real by camera EXIF"
+    elif weight:
+        score = (1 - weight) * p + weight * CAMERA_PRIOR
+        reason = f"pixel classifier + {camera_desc}"
+        signals.append(f"Camera metadata found ({camera_desc}): counted as {weight:.0%} of "
+                       f"the score, pulling it from {p:.0%} to {score:.0%} likely AI. "
+                       "EXIF can be faked, so it never decides on its own.")
     else:
         score = p
         reason = "pixel classifier"
