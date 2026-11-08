@@ -22,7 +22,7 @@ except ImportError:
 
 import gradio as gr
 from PIL import Image
-from src.detector.provenance import analyze as analyze_provenance
+from src.aggregate.pipeline import analyze as analyze_pipeline
 
 # Formats accepted by the upload widget
 ACCEPTED_FORMATS = [
@@ -356,24 +356,29 @@ def detect_image(image_path):
     # Convert HEIC, AVIF, WebP, TIFF to JPEG for reliable downstream analysis
     analysis_path = ensure_compatible(image_path)
 
-    prov_result = analyze_provenance(analysis_path)
-    verdict = prov_result.get("verdict", "unknown")
+    # Layer 1 (provenance) + Layer 2 (pixel classifier), combined
+    result = analyze_pipeline(analysis_path)
+    verdict = result["verdict"]
+    confidence = result["confidence"]
+    baked_score = f"{result['score']:.0%} Baked"
 
     if verdict == "ai":
-        baked_score = "95% Baked"
-        verdict_display = "Baked (AI-Generated Image)"
-    elif verdict == "likely_real":
-        baked_score = "15% Baked"
-        verdict_display = "Real (Authentic Camera Photo)"
+        verdict_display = f"Baked (AI-Generated Image) - {confidence} confidence"
+    elif verdict == "real":
+        verdict_display = f"Real (Authentic Image) - {confidence} confidence"
     else:
-        baked_score = "50% Baked"
-        verdict_display = "Inconclusive (Needs Pixel and Frequency Analysis)"
+        verdict_display = "Uncertain (could be either)"
 
-    signals = prov_result.get("signals", [])
+    signals = result.get("signals", [])
     signals_display = "\n".join(f"- {s}" for s in signals) if signals else "No notable signals detected."
 
+    prov_result = result["provenance"]
     raw_data = {
         "verdict": verdict,
+        "score": round(result["score"], 4),
+        "decided_by": result["reason"],
+        "classifier": result["classifier"],
+        "provenance_verdict": prov_result.get("verdict"),
         "c2pa": prov_result.get("c2pa", {}),
         "exif": prov_result.get("exif", {}),
         "png_text": prov_result.get("png_text", {}),
@@ -458,7 +463,7 @@ def build_app():
                         : C2PA manifests, camera exposure tags, PNG prompt chunks.
                     </li>
                     <li>
-                        <span class="status-dot status-planned"></span>
+                        <span class="status-dot status-active"></span>
                         <strong>Layer 2: ML Classifier</strong>
                         : ResNet trained on synthetic vs real images.
                     </li>
