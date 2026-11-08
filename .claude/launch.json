@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "real-or-baked",
+      "runtimeExecutable": "venv/Scripts/python.exe",
+      "runtimeArgs": ["src/main.py"],
+      "port": 7860,
+      "env": { "CUDA_VISIBLE_DEVICES": "-1" }
+    }
+  ]
+}

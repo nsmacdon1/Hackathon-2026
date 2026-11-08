@@ -51,307 +51,299 @@ def ensure_compatible(image_path):
 
 FORCE_LIGHT_JS = """
 () => {
-    document.documentElement.classList.remove('dark');
-    document.body.classList.remove('dark');
-    const observer = new MutationObserver(() => {
+    // Black-and-white design: always light, even if the browser prefers dark
+    const strip = () => {
         document.documentElement.classList.remove('dark');
         document.body.classList.remove('dark');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    // Stagger the card fade-in animations
-    setTimeout(() => {
-        const cards = document.querySelectorAll('.glass-card');
-        cards.forEach((card, i) => {
-            card.style.animationDelay = (i * 0.12) + 's';
-        });
-    }, 50);
+    };
+    strip();
+    new MutationObserver(strip).observe(document.documentElement,
+        { attributes: true, attributeFilter: ['class'] });
 }
 """
 
 CUSTOM_CSS = """
-/* Import Inter from Google Fonts for clean reliable rendering */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-/* Force light mode on every surface */
-:root, html, body, .dark, body.dark, html.dark {
-    --body-background-fill: #ffffff !important;
-    --background-fill-primary: #ffffff !important;
-    --background-fill-secondary: #fafafa !important;
-    --block-background-fill: rgba(255,255,255,0.7) !important;
-    --border-color-primary: rgba(0,0,0,0.06) !important;
-    --body-text-color: #1a1a1a !important;
-    --input-background-fill: #ffffff !important;
-    background-color: #ffffff !important;
-    color: #1a1a1a !important;
+:root, .dark {
+    --ink: #0a0a0a;
+    --ink-2: #5c5c5c;
+    --ink-3: #9a9a9a;
+    --line: #0a0a0a;
+    --line-soft: #e6e6e6;
+    --paper: #ffffff;
+    --paper-2: #f6f6f6;
+    --sans: 'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+    /* Gradio theme variables */
+    --body-background-fill: var(--paper) !important;
+    --background-fill-primary: var(--paper) !important;
+    --background-fill-secondary: var(--paper-2) !important;
+    --block-background-fill: var(--paper) !important;
+    --block-border-color: var(--line-soft) !important;
+    --border-color-primary: var(--line-soft) !important;
+    --body-text-color: var(--ink) !important;
+    --body-text-color-subdued: var(--ink-2) !important;
+    --input-background-fill: var(--paper) !important;
+    --color-accent: var(--ink) !important;
+    --color-accent-soft: var(--paper-2) !important;
+    --block-label-text-color: var(--ink-2) !important;
+    --block-title-text-color: var(--ink-2) !important;
     color-scheme: light !important;
 }
 
-/* Animations */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33%      { transform: translate(30px, -20px) scale(1.05); }
-    66%      { transform: translate(-20px, 15px) scale(0.97); }
-}
-
-@keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
-}
-
-@keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 20px rgba(249, 115, 22, 0.15); }
-    50%      { box-shadow: 0 0 35px rgba(249, 115, 22, 0.3); }
-}
-
-/* Background with soft floating blobs */
 html, body {
-    min-height: 100vh !important;
-    background: #ffffff !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
-    font-size: 17px !important;
-    overflow-y: auto !important;
-    scroll-behavior: smooth !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    text-rendering: optimizeLegibility !important;
-}
-
-/* Animated ambient background blobs */
-body::before, body::after {
-    content: '';
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.5;
-    z-index: -1;
-    pointer-events: none;
-}
-
-body::before {
-    width: 600px;
-    height: 600px;
-    top: -120px;
-    right: -100px;
-    background: radial-gradient(circle, rgba(255, 186, 116, 0.4) 0%, transparent 70%);
-    animation: float 18s ease-in-out infinite;
-}
-
-body::after {
-    width: 500px;
-    height: 500px;
-    bottom: -80px;
-    left: -60px;
-    background: radial-gradient(circle, rgba(254, 215, 170, 0.35) 0%, transparent 70%);
-    animation: float 22s ease-in-out infinite reverse;
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+    font-family: var(--sans) !important;
+    -webkit-font-smoothing: antialiased;
 }
 
 .gradio-container {
-    max-width: 880px !important;
+    max-width: 1120px !important;
     margin: 0 auto !important;
-    padding: 52px 24px 140px 24px !important;
-    background: transparent !important;
+    padding: 40px 28px 96px !important;
+    background: var(--paper) !important;
+    font-family: var(--sans) !important;
 }
 
-/* Frosted glass cards */
-.glass-card {
-    background: rgba(255, 255, 255, 0.72) !important;
-    backdrop-filter: blur(40px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    border-radius: 28px !important;
-    padding: 40px 44px !important;
-    margin-bottom: 24px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04),
-                0 1px 4px rgba(0, 0, 0, 0.03),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-    opacity: 0;
-    animation: fadeInUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.35s ease !important;
-}
+footer { display: none !important; }
 
-.glass-card:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.07),
-                0 4px 12px rgba(0, 0, 0, 0.04) !important;
-}
+/* Gradio pads every HTML block; our sections handle their own spacing */
+.html-container { padding: 0 !important; }
 
-/* Title with solid text rendering - no broken letters */
-.hero-title {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 3.4rem !important;
-    font-weight: 900 !important;
-    color: #ea580c !important;
-    letter-spacing: -0.02em !important;
-    line-height: 1.1 !important;
-    margin: 0 0 14px 0 !important;
-    -webkit-font-smoothing: antialiased !important;
-    text-rendering: geometricPrecision !important;
+/* ---------- Header ---------- */
+.masthead {
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 8px;
 }
-
-.hero-subtitle {
-    font-size: 1.15rem !important;
-    color: #737373 !important;
-    font-weight: 400 !important;
-    line-height: 1.6 !important;
-    margin: 0 !important;
-    max-width: 560px !important;
-}
-
-.section-heading {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 1.3rem !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-    letter-spacing: -0.01em !important;
-    margin: 0 0 20px 0 !important;
-}
-
-/* Pill badge */
-.tag-pill {
-    display: inline-block;
-    padding: 5px 14px;
-    background: linear-gradient(135deg, #fff7ed, #ffedd5);
-    color: #c2410c;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
+.masthead .kicker {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    margin-bottom: 16px;
-    border: 1px solid rgba(251, 146, 60, 0.25);
+    color: var(--ink-2);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 18px;
 }
-
-/* Orange gradient pill button with glow pulse */
-button.primary, .action-pill {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 9999px !important;
-    font-family: 'Inter', -apple-system, sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    padding: 16px 44px !important;
-    cursor: pointer !important;
-    min-height: 54px !important;
-    box-shadow: 0 8px 24px rgba(234, 88, 12, 0.3) !important;
-    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    animation: pulseGlow 3s ease-in-out infinite !important;
+.masthead h1 {
+    font-family: var(--sans);
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    margin: 0 0 16px;
+    color: var(--ink);
 }
-
-button.primary:hover, .action-pill:hover {
-    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%) !important;
-    box-shadow: 0 12px 32px rgba(234, 88, 12, 0.4) !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    animation: none !important;
-}
-
-button.primary:active, .action-pill:active {
-    transform: translateY(0) scale(0.98) !important;
-}
-
-/* Image upload area - clean, light, inviting */
-.image-container, [data-testid="image"] {
-    background: #ffffff !important;
-    border: 2px dashed rgba(251, 146, 60, 0.35) !important;
-    border-radius: 22px !important;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
-    min-height: 220px !important;
-}
-
-.image-container:hover, [data-testid="image"]:hover {
-    border-color: #f97316 !important;
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.08) !important;
-}
-
-div:has(> .upload-container), .upload-container {
-    background: transparent !important;
-}
-
-/* Text inputs - light and airy */
-textarea, input[type="text"] {
-    background: #ffffff !important;
-    border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 16px !important;
-    color: #1a1a1a !important;
-    font-family: 'Inter', -apple-system, sans-serif !important;
-    font-size: 1.05rem !important;
-    padding: 14px 18px !important;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
-}
-
-textarea:focus, input[type="text"]:focus {
-    border-color: #f97316 !important;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12) !important;
-}
-
-label span {
-    color: #525252 !important;
-    font-weight: 600 !important;
-    font-size: 0.95rem !important;
-}
-
-/* Strip default Gradio chrome */
-.block, .form, .panel, .gr-box, .gr-panel, .gr-form {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* Accordion styling */
-.accordion {
-    border: 1px solid rgba(0,0,0,0.06) !important;
-    border-radius: 16px !important;
-    overflow: hidden !important;
-}
-
-/* Status indicator dot */
-.status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 8px;
-    position: relative;
-    top: -1px;
-}
-.status-active { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
-.status-planned { background: #d4d4d8; }
-
-/* Pipeline list */
-.pipeline-list {
-    list-style: none;
-    padding: 0;
+.masthead p {
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 620px;
     margin: 0;
 }
-.pipeline-list li {
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.04);
-    font-size: 1.05rem;
-    color: #404040;
-    line-height: 1.5;
+
+/* ---------- Section labels ---------- */
+.section-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    margin: 28px 0 14px;
+    display: flex;
+    gap: 14px;
 }
-.pipeline-list li:last-child { border-bottom: none; }
-.pipeline-list li strong { color: #1a1a1a; font-weight: 700; }
+.section-label b { font-weight: 700; }
+.section-label span { color: var(--ink-2); }
+
+/* ---------- Upload ---------- */
+.upload-box, .upload-box > div {
+    border-radius: 2px !important;
+}
+.upload-box {
+    border: 1.5px dashed var(--ink) !important;
+    background: var(--paper-2) !important;
+    min-height: 340px !important;
+}
+.upload-box:hover { background: #efefef !important; }
+
+/* ---------- Button ---------- */
+button.analyze-btn, .analyze-btn button {
+    background: var(--ink) !important;
+    color: var(--paper) !important;
+    border: 1.5px solid var(--ink) !important;
+    border-radius: 2px !important;
+    font-family: var(--mono) !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    min-height: 54px !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+}
+button.analyze-btn:hover, .analyze-btn button:hover {
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+}
+
+/* ---------- Verdict ---------- */
+.verdict {
+    border: 1.5px solid var(--line);
+    padding: 28px 28px 24px;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--paper);
+    color: var(--ink);
+}
+.verdict .v-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+.verdict .v-word {
+    font-family: var(--sans);
+    font-size: clamp(3rem, 8vw, 5.4rem);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    margin: 18px 0 10px;
+}
+.verdict .v-sub {
+    font-size: 1.02rem;
+    opacity: 0.8;
+}
+.verdict.is-ai { background: var(--ink); color: var(--paper) !important; }
+/* Gradio's prose styles force dark text; make everything follow the box */
+.verdict * { color: inherit !important; }
+.verdict.is-uncertain { border-style: dashed; }
+.verdict.is-empty .v-word { color: var(--ink-3); }
+
+.meter { margin-top: 28px; }
+.meter-track {
+    position: relative;
+    height: 12px;
+    border: 1.5px solid currentColor;
+}
+.meter-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: currentColor;
+}
+.meter-tick {
+    position: absolute; top: -6px; bottom: -6px; left: 50%;
+    border-left: 1.5px dashed currentColor;
+    opacity: 0.6;
+}
+.meter-scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+.meter-scale b { font-weight: 700; }
+
+/* ---------- Text outputs ---------- */
+textarea, input[type="text"] {
+    background: var(--paper) !important;
+    border: 1px solid var(--line-soft) !important;
+    border-radius: 2px !important;
+    color: var(--ink) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.92rem !important;
+    line-height: 1.6 !important;
+    box-shadow: none !important;
+}
+textarea:focus, input[type="text"]:focus { border-color: var(--ink) !important; }
+
+.block, .form, .panel {
+    box-shadow: none !important;
+    border-radius: 2px !important;
+}
+
+.accordion, .details-box {
+    border: 1px solid var(--line-soft) !important;
+    border-radius: 2px !important;
+}
+
+/* ---------- Pipeline ---------- */
+.pipeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1.5px solid var(--line);
+}
+.pipeline > div {
+    padding: 18px 18px 20px;
+    border-right: 1px solid var(--line);
+}
+.pipeline > div:last-child { border-right: none; }
+.pipeline .p-num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-2);
+    display: flex; justify-content: space-between;
+}
+.pipeline .p-name {
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin: 10px 0 6px;
+    letter-spacing: -0.01em;
+}
+.pipeline .p-desc { font-size: 0.9rem; color: var(--ink-2); line-height: 1.45; }
+.pipeline .planned .p-name { color: var(--ink-2); }
+
+@media (max-width: 760px) {
+    .pipeline { grid-template-columns: 1fr 1fr; }
+    .pipeline > div:nth-child(2) { border-right: none; }
+    .pipeline > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    .verdict, .upload-box { min-height: 260px !important; }
+}
 """
+
+
+def verdict_html(word, sub, score=None, kind="empty"):
+    """The verdict panel: one big word, a line of detail, and a Real-to-AI meter."""
+    if score is None:
+        meter = ""
+    else:
+        pct = max(0.0, min(1.0, score)) * 100
+        meter = f"""
+        <div class="meter">
+            <div class="meter-track">
+                <div class="meter-fill" style="width:{pct:.1f}%"></div>
+                <div class="meter-tick"></div>
+            </div>
+            <div class="meter-scale"><span>Real</span><b>{pct:.0f}% baked</b><span>AI</span></div>
+        </div>"""
+    return f"""
+    <div class="verdict is-{kind}">
+        <div>
+            <div class="v-label">Verdict</div>
+            <div class="v-word">{word}</div>
+            <div class="v-sub">{sub}</div>
+        </div>
+        {meter}
+    </div>"""
+
+
+EMPTY_VERDICT = verdict_html("—", "Upload an image to analyze it.")
 
 
 def detect_image(image_path):
     if not image_path:
-        return (
-            "No Image Provided",
-            "0%",
-            "Please upload an image above to begin detection.",
-            {},
-        )
+        return EMPTY_VERDICT, "", {}
 
     # Convert HEIC, AVIF, WebP, TIFF to JPEG for reliable downstream analysis
     analysis_path = ensure_compatible(image_path)
@@ -360,22 +352,22 @@ def detect_image(image_path):
     result = analyze_pipeline(analysis_path)
     verdict = result["verdict"]
     confidence = result["confidence"]
-    baked_score = f"{result['score']:.0%} Baked"
+    score = result["score"]
 
     if verdict == "ai":
-        verdict_display = f"Baked (AI-Generated Image) - {confidence} confidence"
+        html = verdict_html("Baked.", f"AI-generated · {confidence} confidence", score, "ai")
     elif verdict == "real":
-        verdict_display = f"Real (Authentic Image) - {confidence} confidence"
+        html = verdict_html("Real.", f"Authentic image · {confidence} confidence", score, "real")
     else:
-        verdict_display = "Uncertain (could be either)"
+        html = verdict_html("Unsure.", "Could be either - see the evidence below", score, "uncertain")
 
     signals = result.get("signals", [])
-    signals_display = "\n".join(f"- {s}" for s in signals) if signals else "No notable signals detected."
+    signals_display = "\n".join(f"→ {s}" for s in signals) if signals else "No notable signals detected."
 
     prov_result = result["provenance"]
     raw_data = {
         "verdict": verdict,
-        "score": round(result["score"], 4),
+        "score": round(score, 4),
         "decided_by": result["reason"],
         "classifier": result["classifier"],
         "provenance_verdict": prov_result.get("verdict"),
@@ -383,119 +375,98 @@ def detect_image(image_path):
         "exif": prov_result.get("exif", {}),
         "png_text": prov_result.get("png_text", {}),
     }
+    return html, signals_display, raw_data
 
-    return verdict_display, baked_score, signals_display, raw_data
+
+def section(num, title, note=""):
+    return gr.HTML(f'<div class="section-label"><b>{num}</b>{title}'
+                   f'{f"<span>{note}</span>" if note else ""}</div>')
+
+
+PIPELINE_HTML = """
+<div class="pipeline">
+  <div class="active">
+    <div class="p-num"><span>LAYER 1</span><span>●</span></div>
+    <div class="p-name">Provenance</div>
+    <div class="p-desc">C2PA content credentials, camera EXIF, AI prompts hidden in PNG files.</div>
+  </div>
+  <div class="active">
+    <div class="p-num"><span>LAYER 2</span><span>●</span></div>
+    <div class="p-name">Pixel classifier</div>
+    <div class="p-desc">ResNet-50 trained on real vs AI images, hardened against compression.</div>
+  </div>
+  <div class="planned">
+    <div class="p-num"><span>LAYER 3</span><span>○</span></div>
+    <div class="p-name">Frequency</div>
+    <div class="p-desc">Fourier analysis of generator upsampling grids. Planned.</div>
+  </div>
+  <div class="active">
+    <div class="p-num"><span>AGGREGATOR</span><span>●</span></div>
+    <div class="p-name">Verdict</div>
+    <div class="p-desc">Metadata proof overrides; otherwise the pixel score decides.</div>
+  </div>
+</div>
+"""
 
 
 def build_app():
-    theme = gr.themes.Default(
-        primary_hue=gr.themes.colors.orange,
-        neutral_hue=gr.themes.colors.zinc,
-        font=gr.themes.GoogleFont("Inter"),
-    )
+    with gr.Blocks(title="Real or Baked") as demo:
 
-    with gr.Blocks(title="Real or Baked", theme=theme, css=CUSTOM_CSS, js=FORCE_LIGHT_JS) as demo:
+        gr.HTML("""
+            <header class="masthead">
+                <div class="kicker"><span>AI image forensics</span><span>Hackathon 2026</span></div>
+                <h1>Real or Baked</h1>
+                <p>Upload any image. We check its digital paperwork and its pixels,
+                   then tell you whether a camera or a generator made it.</p>
+            </header>
+        """)
 
-        # Hero card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<span class="tag-pill">AI Image Detector</span>')
-            gr.HTML('<h1 class="hero-title">Real or Baked</h1>')
-            gr.HTML(
-                '<p class="hero-subtitle">A multi-layered detection pipeline that checks '
-                'digital provenance, sensor physics, and generator fingerprints to figure '
-                'out if an image is authentic or AI-generated.</p>'
-            )
-
-        # Upload card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<h2 class="section-heading">Upload an Image</h2>')
-            gr.HTML(
-                '<p style="color:#737373; font-size:0.95rem; margin:0 0 12px 0;">'
-                'Supports JPEG, PNG, HEIC, WebP, TIFF, AVIF, BMP, and GIF.</p>'
-            )
-            image_input = gr.Image(
-                type="filepath",
-                label="Drop an image here or click to browse",
-            )
-            analyze_button = gr.Button("Analyze Image", variant="primary", elem_classes=["action-pill"])
-
-        # Verdict card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<h2 class="section-heading">Detection Verdict</h2>')
-            with gr.Row():
-                verdict_output = gr.Textbox(
-                    label="Verdict",
-                    placeholder="Waiting for an image ...",
-                    interactive=False,
-                    scale=2,
+        with gr.Row():
+            with gr.Column(scale=1):
+                section("01", "Image", "any format")
+                image_input = gr.Image(
+                    type="filepath",
+                    label="Drop an image here or click to browse",
+                    show_label=False,
+                    elem_classes=["upload-box"],
+                    height=340,
                 )
-                score_output = gr.Textbox(
-                    label="Baked Score",
-                    placeholder="--",
-                    interactive=False,
-                    scale=1,
-                )
+                analyze_button = gr.Button("Analyze image →", elem_classes=["analyze-btn"])
+            with gr.Column(scale=1):
+                section("02", "Verdict")
+                verdict_output = gr.HTML(EMPTY_VERDICT)
 
-        # Signals card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<h2 class="section-heading">Signals and Evidence</h2>')
-            signals_output = gr.Textbox(
-                label="Why this verdict was given",
-                placeholder="Detected fingerprints and reasoning will appear here.",
-                lines=5,
-                interactive=False,
-            )
-
-        # Provenance deep dive card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<h2 class="section-heading">Provenance Deep Dive</h2>')
-            with gr.Accordion("Inspect Raw EXIF and C2PA Data", open=False):
-                details_output = gr.JSON(label="Metadata Inspection Data")
-
-        # Pipeline architecture card
-        with gr.Column(elem_classes=["glass-card"]):
-            gr.HTML('<h2 class="section-heading">Detection Pipeline</h2>')
-            gr.HTML("""
-                <ul class="pipeline-list">
-                    <li>
-                        <span class="status-dot status-active"></span>
-                        <strong>Layer 1: Provenance</strong>
-                        : C2PA manifests, camera exposure tags, PNG prompt chunks.
-                    </li>
-                    <li>
-                        <span class="status-dot status-active"></span>
-                        <strong>Layer 2: ML Classifier</strong>
-                        : ResNet trained on synthetic vs real images.
-                    </li>
-                    <li>
-                        <span class="status-dot status-planned"></span>
-                        <strong>Layer 3: Frequency Analysis</strong>
-                        : 2D Fourier transform (FFT) grid artifact detector.
-                    </li>
-                    <li>
-                        <span class="status-dot status-planned"></span>
-                        <strong>Aggregator and Explainer</strong>
-                        : Fuses all layer scores and produces region heatmaps.
-                    </li>
-                </ul>
-            """)
-
-        # Events
-        analyze_button.click(
-            fn=detect_image,
-            inputs=[image_input],
-            outputs=[verdict_output, score_output, signals_output, details_output],
+        section("03", "Evidence", "why this verdict was given")
+        signals_output = gr.Textbox(
+            show_label=False,
+            placeholder="Signals from each layer will appear here.",
+            lines=6,
+            interactive=False,
         )
+        with gr.Accordion("Raw metadata — EXIF, C2PA, classifier output", open=False,
+                          elem_classes=["details-box"]):
+            details_output = gr.JSON(show_label=False)
 
-        image_input.change(
-            fn=detect_image,
-            inputs=[image_input],
-            outputs=[verdict_output, score_output, signals_output, details_output],
-        )
+        section("04", "Pipeline", "● active   ○ planned")
+        gr.HTML(PIPELINE_HTML)
+
+        outputs = [verdict_output, signals_output, details_output]
+        analyze_button.click(fn=detect_image, inputs=[image_input], outputs=outputs)
+        image_input.change(fn=detect_image, inputs=[image_input], outputs=outputs)
 
     return demo
 
 
+THEME = gr.themes.Base(
+    primary_hue=gr.themes.colors.neutral,
+    neutral_hue=gr.themes.colors.neutral,
+    font=[gr.themes.GoogleFont("Inter"), "Helvetica Neue", "Arial", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "Consolas", "monospace"],
+    radius_size=gr.themes.sizes.radius_none,
+)
+
+
 if __name__ == "__main__":
     app = build_app()
-    app.launch(server_name="127.0.0.1", server_port=7860, share=False)
+    app.launch(server_name="127.0.0.1", server_port=7860, share=False,
+               theme=THEME, css=CUSTOM_CSS, js=FORCE_LIGHT_JS)
