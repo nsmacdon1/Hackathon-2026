@@ -7,7 +7,11 @@ is to be AI-generated (0.0 = real, 1.0 = AI).
 Which model file is used:
   1. the REALBAKED_MODEL environment variable, if set, e.g.
          $env:REALBAKED_MODEL = "src\\models\\<run>\\best.pt"
-  2. otherwise the newest src/models/<run>/best.pt
+  2. otherwise src/models/detector.pt - the shared model, committed to git
+  3. otherwise the newest src/models/<run>/best.pt from your own training
+
+To share a better model with the team, copy its best.pt over detector.pt
+and commit it.
 """
 
 import io
@@ -29,6 +33,9 @@ def find_model_path():
     env = os.environ.get("REALBAKED_MODEL")
     if env:
         return Path(env)
+    shared = MODELS_DIR / "detector.pt"
+    if shared.exists():
+        return shared
     runs = sorted(MODELS_DIR.glob("*/best.pt"))   # run folders start with date-time
     return runs[-1] if runs else None
 
