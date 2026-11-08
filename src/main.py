@@ -49,29 +49,35 @@ def ensure_compatible(image_path):
     except Exception:
         return image_path
 
-FORCE_LIGHT_JS = """
+FORCE_DARK_JS = """
 () => {
-    // Black-and-white design: always light, even if the browser prefers dark
-    const strip = () => {
-        document.documentElement.classList.remove('dark');
-        document.body.classList.remove('dark');
+    // Dark design: always dark, even if the browser prefers light, so
+    // Gradio's own widgets use their dark styles too
+    const add = () => {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
     };
-    strip();
-    new MutationObserver(strip).observe(document.documentElement,
+    add();
+    new MutationObserver(add).observe(document.documentElement,
         { attributes: true, attributeFilter: ['class'] });
 }
 """
 
+
+FAVICON = os.path.join(CURRENT_DIR, "assets", "bread.svg")
+
 CUSTOM_CSS = """
 
 :root, .dark {
-    --ink: #0a0a0a;
-    --ink-2: #5c5c5c;
-    --ink-3: #9a9a9a;
-    --line: #0a0a0a;
-    --line-soft: #e6e6e6;
-    --paper: #ffffff;
-    --paper-2: #f6f6f6;
+    --ink: #ededed;
+    --ink-2: #9a9a9a;
+    --ink-3: #555555;
+    --line: #ededed;
+    --line-soft: #262626;
+    --paper: #0b0b0b;
+    --paper-2: #141414;
+    --paper-3: #1c1c1c;
+    --accent: #2dd4bf;
     --sans: 'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
 
@@ -89,7 +95,10 @@ CUSTOM_CSS = """
     --color-accent-soft: var(--paper-2) !important;
     --block-label-text-color: var(--ink-2) !important;
     --block-title-text-color: var(--ink-2) !important;
-    color-scheme: light !important;
+    color-scheme: dark !important;
+    --input-background-fill-focus: var(--paper) !important;
+    --block-label-background-fill: var(--paper) !important;
+    --button-secondary-background-fill: var(--paper-2) !important;
 }
 
 html, body {
@@ -137,6 +146,12 @@ footer { display: none !important; }
     margin: 0 0 16px;
     color: var(--ink);
 }
+
+/* Small teal accents */
+.dot-on { color: var(--accent) !important; font-style: normal; }
+textarea:focus, input[type="text"]:focus { border-color: var(--accent) !important; }
+button.analyze-btn:hover, .analyze-btn button:hover { border-color: var(--accent) !important; }
+::selection { background: var(--accent); color: var(--paper); }
 .masthead p {
     font-size: 1.08rem;
     line-height: 1.55;
@@ -158,7 +173,7 @@ footer { display: none !important; }
     display: flex;
     gap: 14px;
 }
-.section-label b { font-weight: 700; }
+.section-label b { font-weight: 700; color: var(--accent) !important; }
 .section-label span { color: var(--ink-2); }
 
 /* ---------- Upload ---------- */
@@ -170,7 +185,7 @@ footer { display: none !important; }
     background: var(--paper-2) !important;
     min-height: 340px !important;
 }
-.upload-box:hover { background: #efefef !important; }
+.upload-box:hover { background: var(--paper-3) !important; border-color: var(--accent) !important; }
 
 /* ---------- Button ---------- */
 button.analyze-btn, .analyze-btn button {
@@ -246,7 +261,7 @@ button.analyze-btn:hover, .analyze-btn button:hover {
     width: 0; height: 0;
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
-    border-top: 10px solid currentColor;
+    border-top: 10px solid var(--accent);
 }
 .meter-zones { display: flex; height: 14px; }
 .meter-zones > div { border: 1.5px solid currentColor; }
@@ -276,7 +291,7 @@ textarea, input[type="text"] {
     line-height: 1.6 !important;
     box-shadow: none !important;
 }
-textarea:focus, input[type="text"]:focus { border-color: var(--ink) !important; }
+textarea:focus, input[type="text"]:focus { border-color: var(--accent) !important; }
 
 .block, .form, .panel {
     box-shadow: none !important;
@@ -413,12 +428,12 @@ def section(num, title, note=""):
 PIPELINE_HTML = """
 <div class="pipeline">
   <div class="active">
-    <div class="p-num"><span>LAYER 1</span><span>●</span></div>
+    <div class="p-num"><span>LAYER 1</span><span class="dot-on">●</span></div>
     <div class="p-name">Provenance</div>
     <div class="p-desc">C2PA content credentials, camera EXIF, AI prompts hidden in PNG files.</div>
   </div>
   <div class="active">
-    <div class="p-num"><span>LAYER 2</span><span>●</span></div>
+    <div class="p-num"><span>LAYER 2</span><span class="dot-on">●</span></div>
     <div class="p-name">Pixel classifier</div>
     <div class="p-desc">ResNet-50 trained on real vs AI images, hardened against compression.</div>
   </div>
@@ -428,7 +443,7 @@ PIPELINE_HTML = """
     <div class="p-desc">Fourier analysis of generator upsampling grids. Planned.</div>
   </div>
   <div class="active">
-    <div class="p-num"><span>AGGREGATOR</span><span>●</span></div>
+    <div class="p-num"><span>AGGREGATOR</span><span class="dot-on">●</span></div>
     <div class="p-name">Verdict</div>
     <div class="p-desc">Metadata proof overrides; otherwise the pixel score decides.</div>
   </div>
@@ -439,7 +454,7 @@ PIPELINE_HTML = """
 def build_app():
     with gr.Blocks(title="Real or Baked") as demo:
 
-        gr.HTML("""
+        gr.HTML(f"""
             <header class="masthead">
                 <div class="kicker"><span>AI image forensics</span><span>Hackathon 2026</span></div>
                 <h1>Real or Baked</h1>
@@ -474,7 +489,7 @@ def build_app():
                           elem_classes=["details-box"]):
             details_output = gr.JSON(show_label=False)
 
-        section("04", "Pipeline", "● active   ○ planned")
+        section("04", "Pipeline", "<i class=\"dot-on\">●</i> active   ○ planned")
         gr.HTML(PIPELINE_HTML)
 
         outputs = [verdict_output, signals_output, details_output]
@@ -496,4 +511,5 @@ THEME = gr.themes.Base(
 if __name__ == "__main__":
     app = build_app()
     app.launch(server_name="127.0.0.1", server_port=7860, share=False,
-               theme=THEME, css=CUSTOM_CSS, js=FORCE_LIGHT_JS)
+               theme=THEME, css=CUSTOM_CSS, js=FORCE_DARK_JS,
+               favicon_path=FAVICON)

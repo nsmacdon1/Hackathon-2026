@@ -21,7 +21,7 @@ How the aggregator decides:
   the image as AI-generated, a generator prompt stored in a PNG, or an AI tool
   named in the EXIF software field makes the verdict Baked.
 - **Camera metadata pulls the score toward real.** Full camera data (make,
-  model and exposure settings) counts for 60% of the score, partial data for
+  model and exposure settings) counts for 70% of the score, partial data for
   35%. With full camera data, the pixel model alone can push the verdict no
   further than Unsure. EXIF is easy to fake, so it never proves an image is
   real by itself.
