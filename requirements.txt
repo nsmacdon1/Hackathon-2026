@@ -1,3 +1,6 @@
-# Add project dependencies here
 pillow
 c2pa-python
+torch
+open_clip_torch
+scikit-learn
+numpy
