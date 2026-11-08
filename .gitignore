@@ -232,3 +232,6 @@ data/
 *.safetensors
 *.onnx
 
+# Training images: keep the folders (via .gitkeep), ignore everything inside
+src/data/*/*
+!src/data/*/.gitkeep
