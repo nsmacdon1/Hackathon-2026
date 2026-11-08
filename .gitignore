@@ -235,3 +235,7 @@ data/
 # Training images: keep the folders (via .gitkeep), ignore everything inside
 src/data/*/*
 !src/data/*/.gitkeep
+
+# Trained models: large files, share them outside git (e.g. Google Drive)
+src/models/*
+!src/models/.gitkeep
