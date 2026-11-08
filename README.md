@@ -1,4 +1,4 @@
-# Hackathon-2026
+# Real or Baked
 
 AI image detection project.
 
