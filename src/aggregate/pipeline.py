@@ -28,7 +28,7 @@ REAL_BELOW = 0.30
 # How much camera metadata counts, blended with the pixel score:
 #   score = (1 - weight) * pixel_score + weight * CAMERA_PRIOR
 CAMERA_PRIOR = 0.05              # what camera metadata alone "says" (very likely real)
-CAMERA_WEIGHT_FULL = 0.60        # make + model + at least 2 exposure settings
+CAMERA_WEIGHT_FULL = 0.70        # make + model + at least 2 exposure settings
 CAMERA_WEIGHT_PARTIAL = 0.35     # make or model only
 EXPOSURE_FIELDS = ("ExposureTime", "FNumber", "ISOSpeedRatings", "FocalLength")
 
