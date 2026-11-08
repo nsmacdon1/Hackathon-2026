@@ -13,7 +13,10 @@ Run:      python provenance.py some_image.jpg
 import json
 import sys
  
-import c2pa
+try:
+    import c2pa
+except ImportError:
+    c2pa = None
 from PIL import Image
 from PIL.ExifTags import TAGS
  
@@ -53,9 +56,12 @@ def check_c2pa(path):
       {"present": True, "valid": True, "generator": "...",
        "ai_source": "fully AI-generated" or None}
     """
+    if c2pa is None:
+        return {"present": False}
+
     try:
         reader = c2pa.Reader(path)
-    except c2pa.C2paError:
+    except Exception:
         # No manifest embedded (the common case for most images today).
         return {"present": False}
  
