@@ -1,1 +1,3 @@
 # Add project dependencies here
+pillow
+c2pa-python
